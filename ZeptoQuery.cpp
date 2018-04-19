@@ -91,13 +91,6 @@ ZeptoQueryItem *ZeptoQuery::getItem(uint8_t idx)
 }
 
 
-uint8_t ZeptoQuery::getCount() {
-	uint8_t ret = this->pos <= 0 ? 0 : this->pos;
-
-	return ret;
-}
-
-
 bool ZeptoQuery::isTrue(uint8_t qIdx, int64_t v)
 {
 	bool ret = false;

@@ -8,10 +8,10 @@
 #include <ZeptoDB/ZeptoTable.h>
 #include <string.h>
 
-static enum {
-	HEADER_SIZE = 100,
-	MAX_FIELDS = 20,
-	ID_LEN = 4,
+enum {
+	ZHEADER_SIZE = 100,
+	ZMAX_FIELDS = 20,
+	ZID_LEN = 4,
 	ZSIGNATURE = 0x5a504442, // FourCC "ZPDB"
 };
 
@@ -29,14 +29,14 @@ ZeptoTable::ZeptoTable(const char *path, ZFieldType *dict)
 	this->tableFile = fopen(path, "ab+");
 	if(this->tableFile) {
 		uint64_t fileSize = getFileSize();
-		if(fileSize >= HEADER_SIZE) {
+		if(fileSize >= ZHEADER_SIZE) {
 			tableExists = this->readHeader();
 		}
 	}
 }
 
 
-virtual ZeptoTable::~ZeptoTable()
+ZeptoTable::~ZeptoTable()
 {
 	this->close();
 }
@@ -65,7 +65,7 @@ bool ZeptoTable::create(ZField *dict)
 	this->fieldCount = 0;
 	this->recordLen = 0;
 
-	uint8_t header[HEADER_SIZE];
+	uint8_t header[ZHEADER_SIZE];
 	uint8_t i = 0;
 	uint16_t pos = 0;
 
@@ -79,7 +79,7 @@ bool ZeptoTable::create(ZField *dict)
 	// Skip over record count for now
 	++pos;
 
-	while(dict[i].type != ZEOF && i < MAX_FIELDS) {
+	while(dict[i].type != ZEOF && i < ZMAX_FIELDS) {
 		this->dict[i].type = dict[i].type;
 		this->dict[i].len = dict[i].len;
 
@@ -171,8 +171,6 @@ bool ZeptoTable::update()
 	if(id >= this->getTableRecordCount()) {
 		return false;
 	}
-
-	ZId id = this->getInt32(0);
 
 	uint64_t recordPos = this->getRecordPos(id);
 	fseek(this->tableFile, recordPos, SEEK_SET);
@@ -275,7 +273,7 @@ int64_t  ZeptoTable::getLong(uint8_t fieldNo)
 	}
 
 	int64_t ret = 0;
-	uint8_t len = this->dict[fieldNo].len;
+
 	switch(this->dict[fieldNo].len) {
 		case 1:
 			ret = this->getInt8(fieldPos);
@@ -307,7 +305,7 @@ int64_t  ZeptoTable::getLong(uint8_t fieldNo)
 char    *ZeptoTable::getString(uint8_t fieldNo)
 {
 	if(!this->tableExists) {
-		return false;
+		return NULL;
 	}
 
 	if(fieldNo >= this->fieldCount) {
@@ -445,7 +443,7 @@ ZeptoQuery *ZeptoTable::where()
 	this->currQueryId = 0;
 
 	this->query.clear();
-	return this->query;
+	return &this->query;
 }
 
 
@@ -466,7 +464,7 @@ bool ZeptoTable::next()
 
 bool ZeptoTable::readHeader(void)
 {
-	uint8_t header[HEADER_SIZE];
+	uint8_t header[ZHEADER_SIZE];
 
 	fseek(this->tableFile, 0, SEEK_SET);
 	int charsRead = fread(header, sizeof(uint8_t), sizeof(header), this->tableFile);
@@ -480,7 +478,7 @@ bool ZeptoTable::readHeader(void)
 	}
 
 	this->fieldCount = header[4];
-	if(this->fieldCount == 0 || this->fieldCount >= MAX_FIELDS) {
+	if(this->fieldCount == 0 || this->fieldCount >= ZMAX_FIELDS) {
 		return false;
 	}
 
@@ -488,7 +486,7 @@ bool ZeptoTable::readHeader(void)
 	for(uint8_t i = 0; i < this->fieldCount; ++i) {
 		uint8_t pos = (i * 3) + 5;
 
-		dict[i].type = header[pos];
+		dict[i].type = (ZFieldType) header[pos];
 		dict[i].len = (header[pos + 1] << 8) | header[pos + 2];
 
 		this->recordLen += dict[i].len;
@@ -598,7 +596,7 @@ uint64_t ZeptoTable::getRecordPos(ZId id)
 	if(id < 0) {
 		id *= -1;
 	}
-	uint64_t ret = HEADER_SIZE + (id * this->recordLen);
+	uint64_t ret = ZHEADER_SIZE + (id * this->recordLen);
 
 	return ret;
 }
@@ -614,7 +612,7 @@ uint64_t ZeptoTable::getFileSize()
 
 uint32_t ZeptoTable::getTableRecordCount()
 {
-	uint32_t ret = (this->getFileSize() - HEADER_SIZE) / this->recordLen;
+	uint32_t ret = (this->getFileSize() - ZHEADER_SIZE) / this->recordLen;
 
 	return ret;
 }
@@ -626,13 +624,13 @@ bool ZeptoTable::doesRecordMatchQuery()
 	uint8_t max = this->query.getCount();
 
 	for(uint8_t i = 0; i < max; ++i) {
-		ZeptoQueryItem qi = this->query.getItem(i);
+		ZeptoQueryItem *qi = this->query.getItem(i);
 		if(!qi) {
 			ret = false;
 			break;
 		}
 
-		uint64_t v = this->getLong(qi.id);
+		uint64_t v = this->getLong(qi->value);
 		ret = ret && this->query.isTrue(i, v);
 	}
 
