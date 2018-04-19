@@ -18,9 +18,12 @@ static enum {
 
 ZeptoTable::ZeptoTable(const char *path, ZFieldType *dict)
 {
+	this->query.clear();
+
+	this->currQueryId = 0;
 	this->tableFile = NULL;
 	this->recordLen = 0;
-	this->recordCount = 0;
+	this->fieldCount = 0;
 	this->tableExists = false;
 
 	this->tableFile = fopen(path, "ab+");
@@ -59,7 +62,7 @@ bool ZeptoTable::create(ZField *dict)
 		return false;
 	}
 
-	this->recordCount = 0;
+	this->fieldCount = 0;
 	this->recordLen = 0;
 
 	uint8_t header[HEADER_SIZE];
@@ -85,11 +88,11 @@ bool ZeptoTable::create(ZField *dict)
 		header[pos++] = dict[i].len & 0xFF;
 
 		++i;
-		++this->recordCount;
+		++this->fieldCount;
 		this->recordLen += dict[i].len;
 	}
 
-	header[4] = this->recordCount;
+	header[4] = this->fieldCount;
 
 	int charsWritten = fwrite(header, sizeof(uint8_t), sizeof(header), this->tableFile);
 	if(charsWritten != sizeof(header)) {
@@ -213,7 +216,7 @@ int32_t   ZeptoTable::getInt(uint8_t fieldNo)
 		return false;
 	}
 
-	if(fieldNo >= this->recordCount) {
+	if(fieldNo >= this->fieldCount) {
 		return 0;
 	}
 
@@ -258,7 +261,7 @@ int64_t  ZeptoTable::getLong(uint8_t fieldNo)
 		return false;
 	}
 
-	if(fieldNo >= this->recordCount) {
+	if(fieldNo >= this->fieldCount) {
 		return 0;
 	}
 
@@ -307,7 +310,7 @@ char    *ZeptoTable::getString(uint8_t fieldNo)
 		return false;
 	}
 
-	if(fieldNo >= this->recordCount) {
+	if(fieldNo >= this->fieldCount) {
 		return 0;
 	}
 
@@ -333,7 +336,7 @@ void ZeptoTable::setInt(uint8_t fieldNo, int32_t v)
 		return;
 	}
 
-	if(fieldNo >= this->recordCount) {
+	if(fieldNo >= this->fieldCount) {
 		return;
 	}
 
@@ -374,7 +377,7 @@ void ZeptoTable::setLong(uint8_t fieldNo, int64_t v)
 		return;
 	}
 
-	if(fieldNo >= this->recordCount) {
+	if(fieldNo >= this->fieldCount) {
 		return;
 	}
 
@@ -419,7 +422,7 @@ void ZeptoTable::setString(uint8_t fieldNo, const char *v)
 		return;
 	}
 
-	if(fieldNo >= this->recordCount) {
+	if(fieldNo >= this->fieldCount) {
 		return;
 	}
 
@@ -434,6 +437,30 @@ void ZeptoTable::setString(uint8_t fieldNo, const char *v)
 
 	strncpy((char *) (this->currRec + fieldPos), v, this->dict[fieldNo].len);
 	this->currRec[fieldPos + this->dict[fieldNo].len - 1] = '\0';
+}
+
+
+ZeptoQuery *ZeptoTable::where()
+{
+	this->currQueryId = 0;
+
+	this->query.clear();
+	return this->query;
+}
+
+
+bool ZeptoTable::next()
+{
+	uint32_t recordCount = this->getTableRecordCount();
+	bool matched = false;
+
+	while(!matched && this->currQueryId < recordCount) {
+		this->fetch(this->currQueryId++);
+
+		matched = this->doesRecordMatchQuery();
+	}
+
+	return matched;
 }
 
 
@@ -452,13 +479,13 @@ bool ZeptoTable::readHeader(void)
 		return false;
 	}
 
-	this->recordCount = header[4];
-	if(this->recordCount == 0 || this->recordCount >= MAX_FIELDS) {
+	this->fieldCount = header[4];
+	if(this->fieldCount == 0 || this->fieldCount >= MAX_FIELDS) {
 		return false;
 	}
 
 	this->recordLen = 0;
-	for(uint8_t i = 0; i < this->recordCount; ++i) {
+	for(uint8_t i = 0; i < this->fieldCount; ++i) {
 		uint8_t pos = (i * 3) + 5;
 
 		dict[i].type = header[pos];
@@ -478,7 +505,7 @@ bool ZeptoTable::readHeader(void)
 
 int16_t ZeptoTable::getFieldPos(uint8_t fieldNo)
 {
-	if(fieldNo >= this->recordCount) {
+	if(fieldNo >= this->fieldCount) {
 		return -1;
 	}
 
@@ -591,4 +618,12 @@ uint32_t ZeptoTable::getTableRecordCount()
 
 	return ret;
 }
+
+
+bool ZeptoTable::doesRecordMatchQuery()
+{
+	// TODO Implement Me
+	return false;
+}
+
 

@@ -9,6 +9,7 @@
 #define ZEPTODB_ZEPTOTABLE_H_
 
 #include <stdio.h>
+#include "ZeptoQuery.h"
 
 typedef enum _zfieldtype {
 	ZID      = 0,
@@ -50,6 +51,8 @@ class ZeptoTable
 		void setLong(uint8_t fieldNo, int64_t v);
 		void setString(uint8_t fieldNo, const char *v);
 
+		ZeptoQuery *where();
+		bool next();
 
 	private:
 		bool readHeader(void);
@@ -69,12 +72,16 @@ class ZeptoTable
 		uint64_t getFileSize();
 		uint32_t getTableRecordCount();
 
+		bool doesRecordMatchQuery();
+
 		FILE *tableFile;
 		uint16_t recordLen;
-		uint8_t recordCount;
+		uint8_t fieldCount;
 		bool tableExists;
 		ZField dict[20];
 		uint8_t currRec[100];
+		ZeptoQuery query;
+		ZId        currQueryId;
 };
 
 #endif /* ZEPTODB_ZEPTOTABLE_H_ */
