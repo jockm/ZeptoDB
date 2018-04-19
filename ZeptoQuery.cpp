@@ -31,43 +31,43 @@ void ZeptoQuery::clear()
 	}
 }
 
-ZeptoQuery *ZeptoQuery::eq(uint32_t id, uint64_t v)
+ZeptoQuery *ZeptoQuery::eq(uint32_t id, int64_t v)
 {
 	return this->add(ZEQ, id, v);
 }
 
 
-ZeptoQuery *ZeptoQuery::ne(uint32_t id, uint64_t v)
+ZeptoQuery *ZeptoQuery::ne(uint32_t id, int64_t v)
 {
 	return this->add(ZNE, id, v);
 }
 
 
-ZeptoQuery *ZeptoQuery::gt(uint32_t id, uint64_t v)
+ZeptoQuery *ZeptoQuery::gt(uint32_t id, int64_t v)
 {
 	return this->add(ZGT, id, v);
 }
 
 
-ZeptoQuery *ZeptoQuery::ge(uint32_t id, uint64_t v)
+ZeptoQuery *ZeptoQuery::ge(uint32_t id, int64_t v)
 {
 	return this->add(ZGE, id, v);
 }
 
 
-ZeptoQuery *ZeptoQuery::lt(uint32_t id, uint64_t v)
+ZeptoQuery *ZeptoQuery::lt(uint32_t id, int64_t v)
 {
 	return this->add(ZLT, id, v);
 }
 
 
-ZeptoQuery *ZeptoQuery::le(uint32_t id, uint64_t v)
+ZeptoQuery *ZeptoQuery::le(uint32_t id, int64_t v)
 {
 	return this->add(ZLE, id, v);
 }
 
 
-ZeptoQuery *ZeptoQuery::add(ZQueryOp op, uint32_t id, uint64_t v)
+ZeptoQuery *ZeptoQuery::add(ZQueryOp op, uint32_t id, int64_t v)
 {
 	uint8_t max = sizeof(this->query) / sizeof(ZeptoQueryItem);
 	if(this->pos < max) {
@@ -96,4 +96,51 @@ uint8_t ZeptoQuery::getCount() {
 
 	return ret;
 }
+
+
+bool ZeptoQuery::isTrue(uint8_t qIdx, int64_t v)
+{
+	bool ret = false;
+
+	if(qIdx >= this->pos) {
+		return ret;
+	}
+
+	int64_t v2 = this->query[qIdx].value;
+	switch(this->query[qIdx].op) {
+		case ZNOP:
+			ret = true;
+			break;
+
+		case ZEQ:
+			ret = v == v2;
+			break;
+
+		case ZNE:
+			ret = v != v2;
+			break;
+
+		case ZLT:
+			ret = v < v2;
+			break;
+
+		case ZLE:
+			ret = v <= v2;
+			break;
+
+		case ZGT:
+			ret = v > v2;
+			break;
+
+		case ZGE:
+			ret = v >= v2;
+			break;
+
+		default:
+			ret = false;
+			break;
+	}
+	return ret;
+}
+
 

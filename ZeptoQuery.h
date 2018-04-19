@@ -24,7 +24,7 @@ typedef enum zqueryop {
 typedef struct {
 		ZQueryOp op;
 		int32_t id;
-		uint64_t value;
+		int64_t value;
 } ZeptoQueryItem;
 
 class ZeptoQuery
@@ -35,21 +35,23 @@ class ZeptoQuery
 
 		void clear();
 
-		ZeptoQuery *eq(uint32_t id, uint64_t v);
-		ZeptoQuery *ne(uint32_t id, uint64_t v);
-		ZeptoQuery *gt(uint32_t id, uint64_t v);
-		ZeptoQuery *ge(uint32_t id, uint64_t v);
-		ZeptoQuery *lt(uint32_t id, uint64_t v);
-		ZeptoQuery *le(uint32_t id, uint64_t v);
+		ZeptoQuery *eq(uint32_t id, int64_t v);
+		ZeptoQuery *ne(uint32_t id, int64_t v);
+		ZeptoQuery *gt(uint32_t id, int64_t v);
+		ZeptoQuery *ge(uint32_t id, int64_t v);
+		ZeptoQuery *lt(uint32_t id, int64_t v);
+		ZeptoQuery *le(uint32_t id, int64_t v);
 
 		ZeptoQueryItem *getItem(uint8_t idx);
+
+		bool isTrue(uint8_t qIdx, int64_t v);
 
 		uint8_t getCount() {
 			return this->pos <= 0 ? 0 : this->pos;
 		}
 
 	private:
-		ZeptoQuery *add(ZQueryOp op, uint32_t id, uint64_t v);
+		ZeptoQuery *add(ZQueryOp op, uint32_t id, int64_t v);
 
 		ZeptoQueryItem query[5];
 		uint8_t        pos;

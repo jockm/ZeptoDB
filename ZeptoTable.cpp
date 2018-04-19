@@ -622,8 +622,21 @@ uint32_t ZeptoTable::getTableRecordCount()
 
 bool ZeptoTable::doesRecordMatchQuery()
 {
-	// TODO Implement Me
-	return false;
+	bool ret = true;
+	uint8_t max = this->query.getCount();
+
+	for(uint8_t i = 0; i < max; ++i) {
+		ZeptoQueryItem qi = this->query.getItem(i);
+		if(!qi) {
+			ret = false;
+			break;
+		}
+
+		uint64_t v = this->getLong(qi.id);
+		ret = ret && this->query.isTrue(i, v);
+	}
+
+	return ret;
 }
 
 
