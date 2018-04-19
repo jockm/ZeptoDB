@@ -25,9 +25,7 @@ ZeptoTable::ZeptoTable(const char *path, ZFieldType *dict)
 
 	this->tableFile = fopen(path, "ab+");
 	if(this->tableFile) {
-		fseek(this->tableFile, 0, SEEK_END);
-		long fileSize = ftell(this->tableFile);
-
+		uint64_t fileSize = getFileSize();
 		if(fileSize >= HEADER_SIZE) {
 			tableExists = this->readHeader();
 		}
@@ -112,14 +110,37 @@ bool ZeptoTable::create(ZField *dict)
 
 bool ZeptoTable::fetch(ZId id)
 {
-	// TODO Implement me
-	return 0;
+	if(!this->tableExists) {
+		return false;
+	}
+
+	if(id < 0 || id >= this->getTableRecordCount()) {
+		return false;
+	}
+	uint64_t recordPos = this->getRecordPos(id);
+	fseek(this->tableFile, recordPos, SEEK_SET);
+
+	int16_t len = fread(this->currRec, sizeof(uint8_t), sizeof(this->currRec), this->tableFile);
+
+	if(len != this->recordLen) {
+		return false;
+	}
+
+	// Was the record deleted?
+	if(this->getInt32(0) < 0) {
+		return false;
+	}
+
+	return true;
 }
 
 
 
 bool ZeptoTable::insert(void)
 {
+	if(!this->tableExists) {
+		return false;
+	}
 	// TODO Implement me
 	return 0;
 }
@@ -128,6 +149,13 @@ bool ZeptoTable::insert(void)
 
 bool ZeptoTable::update(ZId id)
 {
+	if(!this->tableExists) {
+		return false;
+	}
+
+	if(id < 0 || id >= this->getTableRecordCount()) {
+		return false;
+	}
 	// TODO Implement me
 	return 0;
 }
@@ -136,6 +164,9 @@ bool ZeptoTable::update(ZId id)
 
 bool ZeptoTable::remove(ZId id)
 {
+	if(!this->tableExists) {
+		return false;
+	}
 	// TODO Implement me
 	return 0;
 }
@@ -144,6 +175,10 @@ bool ZeptoTable::remove(ZId id)
 
 int32_t   ZeptoTable::getInt(uint8_t fieldNo)
 {
+	if(!this->tableExists) {
+		return false;
+	}
+
 	if(fieldNo >= this->recordCount) {
 		return 0;
 	}
@@ -185,6 +220,10 @@ int32_t   ZeptoTable::getInt(uint8_t fieldNo)
 
 int64_t  ZeptoTable::getLong(uint8_t fieldNo)
 {
+	if(!this->tableExists) {
+		return false;
+	}
+
 	if(fieldNo >= this->recordCount) {
 		return 0;
 	}
@@ -230,6 +269,10 @@ int64_t  ZeptoTable::getLong(uint8_t fieldNo)
 
 char    *ZeptoTable::getString(uint8_t fieldNo)
 {
+	if(!this->tableExists) {
+		return false;
+	}
+
 	if(fieldNo >= this->recordCount) {
 		return 0;
 	}
@@ -252,6 +295,10 @@ char    *ZeptoTable::getString(uint8_t fieldNo)
 
 void ZeptoTable::setInt(uint8_t fieldNo, int32_t v)
 {
+	if(!this->tableExists) {
+		return;
+	}
+
 	if(fieldNo >= this->recordCount) {
 		return;
 	}
@@ -289,6 +336,10 @@ void ZeptoTable::setInt(uint8_t fieldNo, int32_t v)
 
 void ZeptoTable::setLong(uint8_t fieldNo, int64_t v)
 {
+	if(!this->tableExists) {
+		return;
+	}
+
 	if(fieldNo >= this->recordCount) {
 		return;
 	}
@@ -330,6 +381,10 @@ void ZeptoTable::setLong(uint8_t fieldNo, int64_t v)
 
 void ZeptoTable::setString(uint8_t fieldNo, const char *v)
 {
+	if(!this->tableExists) {
+		return;
+	}
+
 	if(fieldNo >= this->recordCount) {
 		return;
 	}
@@ -474,5 +529,29 @@ void ZeptoTable::setInt64(int16_t pos, int64_t v)
 	this->currRec[pos + 5] = (v >> 16) & 0xFF;
 	this->currRec[pos + 6] = (v >> 8) & 0xFF;
 	this->currRec[pos + 7] = v & 0xFF;
+}
+
+
+uint64_t ZeptoTable::getRecordPos(ZId id)
+{
+	uint64_t ret = HEADER_SIZE + (id * this->recordLen);
+
+	return ret;
+}
+
+
+uint64_t ZeptoTable::getFileSize()
+{
+	fseek(this->tableFile, 0, SEEK_END);
+	long fileSize = ftell(this->tableFile);
+	return fileSize;
+}
+
+
+uint32_t ZeptoTable::getTableRecordCount()
+{
+	uint32_t ret = (this->getFileSize() - HEADER_SIZE) / this->recordLen;
+
+	return ret;
 }
 

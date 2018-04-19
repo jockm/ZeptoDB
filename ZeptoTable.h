@@ -18,7 +18,7 @@ typedef enum _zfieldtype {
 } ZFieldType;
 
 
-typedef uint32_t ZId;
+typedef int32_t ZId;
 
 
 typedef struct {
@@ -64,6 +64,10 @@ class ZeptoTable
 		void setInt16(int16_t pos, int16_t v);
 		void setInt32(int16_t pos, int32_t v);
 		void setInt64(int16_t pos, int64_t v);
+
+		uint64_t getRecordPos(ZId id);
+		uint64_t getFileSize();
+		uint32_t getTableRecordCount();
 
 		FILE *tableFile;
 		uint16_t recordLen;
