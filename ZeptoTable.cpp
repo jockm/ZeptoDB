@@ -142,27 +142,109 @@ bool ZeptoTable::remove(ZId id)
 
 
 
-
-int8_t   ZeptoTable::getInt(uint8_t fieldNo)
+int32_t   ZeptoTable::getInt(uint8_t fieldNo)
 {
-	// TODO Implement me
-	return 0;
+	if(fieldNo >= this->recordCount) {
+		return 0;
+	}
+
+	if(this->dict[fieldNo].type != ZINT) {
+		return 0;
+	}
+
+	int16_t fieldPos = this->getFieldPos(fieldNo);
+	if(fieldPos < 0) {
+		return 0;
+	}
+
+	int32_t ret = 0;
+	uint8_t len = this->dict[fieldNo].len;
+	switch(this->dict[fieldNo].len) {
+		case 1:
+			ret = this->getInt8(fieldPos);
+			break;
+
+		case 2:
+			ret = this->getInt16(fieldPos);
+			break;
+
+		case 4:
+			ret = this->getInt32(fieldPos);
+			break;
+
+		default:
+			ret = this->getInt8(fieldPos);
+			break;
+	}
+
+
+	return ret;
 }
 
 
 
-int64_t  ZeptoTable::getInt64(uint8_t fieldNo)
+int64_t  ZeptoTable::getLong(uint8_t fieldNo)
 {
-	// TODO Implement me
-	return 0;
+	if(fieldNo >= this->recordCount) {
+		return 0;
+	}
+
+	if(this->dict[fieldNo].type != ZINT) {
+		return 0;
+	}
+
+	int16_t fieldPos = this->getFieldPos(fieldNo);
+	if(fieldPos < 0) {
+		return 0;
+	}
+
+	int64_t ret = 0;
+	uint8_t len = this->dict[fieldNo].len;
+	switch(this->dict[fieldNo].len) {
+		case 1:
+			ret = this->getInt8(fieldPos);
+			break;
+
+		case 2:
+			ret = this->getInt16(fieldPos);
+			break;
+
+		case 4:
+			ret = this->getInt32(fieldPos);
+			break;
+
+		case 8:
+			ret = this->getInt64(fieldPos);
+			break;
+
+		default:
+			ret = this->getInt8(fieldPos);
+			break;
+	}
+
+
+	return ret;
 }
 
 
 
 char    *ZeptoTable::getString(uint8_t fieldNo)
 {
-	// TODO Implement me
-	return 0;
+	if(fieldNo >= this->recordCount) {
+		return 0;
+	}
+
+	if(this->dict[fieldNo].type != ZSTRING) {
+		return 0;
+	}
+
+	int16_t fieldPos = this->getFieldPos(fieldNo);
+	if(fieldPos < 0) {
+		return 0;
+	}
+
+	char *ret = (char *) (this->currRec + fieldPos);
+	return ret;
 }
 
 
@@ -170,21 +252,99 @@ char    *ZeptoTable::getString(uint8_t fieldNo)
 
 void ZeptoTable::setInt(uint8_t fieldNo, int32_t v)
 {
-	// TODO Implement me
+	if(fieldNo >= this->recordCount) {
+		return;
+	}
+
+	if(this->dict[fieldNo].type != ZINT) {
+		return;
+	}
+
+	int16_t fieldPos = this->getFieldPos(fieldNo);
+	if(fieldPos < 0) {
+		return;
+	}
+
+	uint8_t len = this->dict[fieldNo].len;
+	switch(this->dict[fieldNo].len) {
+		case 1:
+			this->setInt8(fieldPos, (int8_t) v);
+			break;
+
+		case 2:
+			this->setInt16(fieldPos, (int16_t) v);
+			break;
+
+		case 4:
+			this->setInt32(fieldPos, v);
+			break;
+
+		default:
+			this->setInt8(fieldPos, (int8_t) v);
+			break;
+	}
 }
 
 
 
-void ZeptoTable::setInt64(uint8_t fieldNo, int64_t v)
+void ZeptoTable::setLong(uint8_t fieldNo, int64_t v)
 {
-	// TODO Implement me
+	if(fieldNo >= this->recordCount) {
+		return;
+	}
+
+	if(this->dict[fieldNo].type != ZINT) {
+		return;
+	}
+
+	int16_t fieldPos = this->getFieldPos(fieldNo);
+	if(fieldPos < 0) {
+		return;
+	}
+
+	uint8_t len = this->dict[fieldNo].len;
+	switch(this->dict[fieldNo].len) {
+		case 1:
+			this->setInt8(fieldPos, (int8_t) v);
+			break;
+
+		case 2:
+			this->setInt16(fieldPos, (int16_t) v);
+			break;
+
+		case 4:
+			this->setInt32(fieldPos, (int32_t) v);
+			break;
+
+		case 8:
+			this->setInt64(fieldPos, v);
+			break;
+
+		default:
+			this->setInt8(fieldPos, (int8_t) v);
+			break;
+	}
 }
 
 
 
 void ZeptoTable::setString(uint8_t fieldNo, const char *v)
 {
-	// TODO Implement me
+	if(fieldNo >= this->recordCount) {
+		return;
+	}
+
+	if(this->dict[fieldNo].type != ZSTRING) {
+		return;
+	}
+
+	int16_t fieldPos = this->getFieldPos(fieldNo);
+	if(fieldPos < 0) {
+		return;
+	}
+
+	strncpy((char *) (this->currRec + fieldPos), v, this->dict[fieldNo].len);
+	this->currRec[fieldPos + this->dict[fieldNo].len - 1] = '\0';
 }
 
 
@@ -223,5 +383,96 @@ bool ZeptoTable::readHeader(void)
 	}
 
 	return true;
+}
+
+
+
+int16_t ZeptoTable::getFieldPos(uint8_t fieldNo)
+{
+	if(fieldNo >= this->recordCount) {
+		return -1;
+	}
+
+	int16_t ret = 0;
+	for(uint i = 0; i < fieldNo; ++i) {
+		ret += this->dict[i].len;
+	}
+
+	return ret;
+}
+
+
+int8_t ZeptoTable::getInt8(int16_t pos)
+{
+	int8_t ret = this->currRec[pos];
+
+	return ret;
+}
+
+
+int16_t ZeptoTable::getInt16(int16_t pos)
+{
+	int16_t ret = this->currRec[pos] << 8;
+	ret |= this->currRec[pos + 1];
+
+	return ret;
+}
+
+int32_t ZeptoTable::getInt32(int16_t pos)
+{
+	int32_t ret = this->currRec[pos] << 24;
+	ret |= this->currRec[pos + 1] << 16;
+	ret |= this->currRec[pos + 2] << 8;
+	ret |= this->currRec[pos + 3];
+
+	return ret;
+}
+
+int64_t ZeptoTable::getInt64(int16_t pos)
+{
+	int64_t ret = this->currRec[pos] << 56;
+	ret |= this->currRec[pos + 1] << 48;
+	ret |= this->currRec[pos + 2] << 40;
+	ret |= this->currRec[pos + 3] << 32;
+	ret |= this->currRec[pos + 4] << 24;
+	ret |= this->currRec[pos + 5] << 16;
+	ret |= this->currRec[pos + 6] << 8;
+	ret |= this->currRec[pos + 7];
+
+	return ret;
+}
+
+
+void ZeptoTable::setInt8(int16_t pos, int8_t v)
+{
+	this->currRec[pos] = v;
+}
+
+
+void ZeptoTable::setInt16(int16_t pos, int16_t v)
+{
+	this->currRec[pos] = v >> 8;
+	this->currRec[pos + 1] = v & 0xFF;
+}
+
+void ZeptoTable::setInt32(int16_t pos, int32_t v)
+{
+	this->currRec[pos] = v >> 24;
+	this->currRec[pos + 1] = (v >> 16) & 0xFF;
+	this->currRec[pos + 2] = (v >> 8) & 0xFF;
+	this->currRec[pos + 3] = v & 0xFF;
+}
+
+
+void ZeptoTable::setInt64(int16_t pos, int64_t v)
+{
+	this->currRec[pos] = v >> 56;
+	this->currRec[pos + 1] = (v >> 48) & 0xFF;
+	this->currRec[pos + 2] = (v >> 40) & 0xFF;
+	this->currRec[pos + 3] = (v >> 32) & 0xFF;
+	this->currRec[pos + 4] = (v >> 24) & 0xFF;
+	this->currRec[pos + 5] = (v >> 16) & 0xFF;
+	this->currRec[pos + 6] = (v >> 8) & 0xFF;
+	this->currRec[pos + 7] = v & 0xFF;
 }
 

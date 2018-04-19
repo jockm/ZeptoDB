@@ -42,17 +42,28 @@ class ZeptoTable
 		bool update(ZId id);
 		bool remove(ZId id);
 
-		int8_t   getInt(uint8_t fieldNo);
-		int64_t  getInt64(uint8_t fieldNo);
+		int32_t   getInt(uint8_t fieldNo);
+		int64_t  getLong(uint8_t fieldNo);
 		char    *getString(uint8_t fieldNo);
 
 		void setInt(uint8_t fieldNo, int32_t v);
-		void setInt64(uint8_t fieldNo, int64_t v);
+		void setLong(uint8_t fieldNo, int64_t v);
 		void setString(uint8_t fieldNo, const char *v);
 
 
 	private:
 		bool readHeader(void);
+		int16_t getFieldPos(uint8_t fieldNo);
+
+		int8_t getInt8(int16_t pos);
+		int16_t getInt16(int16_t pos);
+		int32_t getInt32(int16_t pos);
+		int64_t getInt64(int16_t pos);
+
+		void setInt8(int16_t pos, int8_t v);
+		void setInt16(int16_t pos, int16_t v);
+		void setInt32(int16_t pos, int32_t v);
+		void setInt64(int16_t pos, int64_t v);
 
 		FILE *tableFile;
 		uint16_t recordLen;
