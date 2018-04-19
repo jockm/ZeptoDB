@@ -14,26 +14,28 @@ typedef enum _zfieldtype {
 	ZID      = 0,
 	ZSTRING = 1,
 	ZINT    = 2,
-	ZEOL    = 0xFF,
+	ZEOF    = 0xFF,
 } ZFieldType;
 
 
 typedef uint32_t ZId;
 
 
-struct {
+typedef struct {
 	ZFieldType type;
 	uint16_t   len;
-};
+} ZField;
 
 
 class ZeptoTable
 {
 	public:
-		ZeptoTable(const char *path);
+		ZeptoTable(const char *path, ZFieldType *dict = NULL);
+		virtual ~ZeptoTable();
 
+		void close(void);
 		bool exists(void);
-		bool create(ZFieldType *dict);
+		bool create(ZField *dict);
 
 		bool fetch(ZId id);
 		bool insert(void);
@@ -50,9 +52,14 @@ class ZeptoTable
 
 
 	private:
+		bool readHeader(void);
+
 		FILE *tableFile;
 		uint16_t recordLen;
-		ZFieldType dict[20];
+		uint8_t recordCount;
+		bool tableExists;
+		ZField dict[20];
+		uint8_t currRec[100];
 };
 
 #endif /* ZEPTODB_ZEPTOTABLE_H_ */
