@@ -39,7 +39,7 @@ class ZeptoTable
 
 		bool fetch(ZId id);
 		bool insert(void);
-		bool update(ZId id);
+		bool update();
 		bool remove(ZId id);
 
 		int32_t   getInt(uint8_t fieldNo);

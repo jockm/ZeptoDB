@@ -141,23 +141,46 @@ bool ZeptoTable::insert(void)
 	if(!this->tableExists) {
 		return false;
 	}
-	// TODO Implement me
-	return 0;
+
+	ZId id = this->getTableRecordCount();
+	this->setInt32(0, id);
+
+	fseek(this->tableFile, 0, SEEK_END);
+	int32_t len = fwrite(this->currRec, sizeof(uint8_t), sizeof(this->currRec), this->tableFile);
+
+	if(len != this->recordLen) {
+		return false;
+	}
+
+	return true;
 }
 
 
 
-bool ZeptoTable::update(ZId id)
+bool ZeptoTable::update()
 {
 	if(!this->tableExists) {
 		return false;
 	}
 
-	if(id < 0 || id >= this->getTableRecordCount()) {
+	ZId id = this->getInt32(0);
+
+	if(id >= this->getTableRecordCount()) {
 		return false;
 	}
-	// TODO Implement me
-	return 0;
+
+	ZId id = this->getInt32(0);
+
+	uint64_t recordPos = this->getRecordPos(id);
+	fseek(this->tableFile, recordPos, SEEK_SET);
+
+	int32_t len = fwrite(this->currRec, sizeof(uint8_t), sizeof(this->currRec), this->tableFile);
+
+	if(len != this->recordLen) {
+		return false;
+	}
+
+	return true;
 }
 
 
@@ -167,8 +190,19 @@ bool ZeptoTable::remove(ZId id)
 	if(!this->tableExists) {
 		return false;
 	}
-	// TODO Implement me
-	return 0;
+
+	if(!this->fetch(id)) {
+		return false;
+	}
+
+	if(id < 0) {
+		return true;
+	}
+
+	this->setInt32(0, id * -1);
+
+	bool ret = this->update();
+	return ret;
 }
 
 
@@ -534,6 +568,9 @@ void ZeptoTable::setInt64(int16_t pos, int64_t v)
 
 uint64_t ZeptoTable::getRecordPos(ZId id)
 {
+	if(id < 0) {
+		id *= -1;
+	}
 	uint64_t ret = HEADER_SIZE + (id * this->recordLen);
 
 	return ret;
