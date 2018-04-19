@@ -6,6 +6,7 @@
  */
 
 #include <ZeptoDB/ZeptoTable.h>
+<<<<<<< HEAD
 #include <string.h>
 
 static enum {
@@ -224,4 +225,6 @@ bool ZeptoTable::readHeader(void)
 
 	return true;
 }
+=======
+>>>>>>> master
 
