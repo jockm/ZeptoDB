@@ -70,7 +70,7 @@ class ZeptoTable
 
 		uint64_t getRecordPos(ZId id);
 		uint64_t getFileSize();
-		uint32_t getTableRecordCount();
+		int32_t getTableRecordCount();
 
 		bool doesRecordMatchQuery();
 

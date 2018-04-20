@@ -228,7 +228,7 @@ int32_t   ZeptoTable::getInt(uint8_t fieldNo)
 	}
 
 	int32_t ret = 0;
-	uint8_t len = this->dict[fieldNo].len;
+
 	switch(this->dict[fieldNo].len) {
 		case 1:
 			ret = this->getInt8(fieldPos);
@@ -347,7 +347,6 @@ void ZeptoTable::setInt(uint8_t fieldNo, int32_t v)
 		return;
 	}
 
-	uint8_t len = this->dict[fieldNo].len;
 	switch(this->dict[fieldNo].len) {
 		case 1:
 			this->setInt8(fieldPos, (int8_t) v);
@@ -388,7 +387,6 @@ void ZeptoTable::setLong(uint8_t fieldNo, int64_t v)
 		return;
 	}
 
-	uint8_t len = this->dict[fieldNo].len;
 	switch(this->dict[fieldNo].len) {
 		case 1:
 			this->setInt8(fieldPos, (int8_t) v);
@@ -449,7 +447,7 @@ ZeptoQuery *ZeptoTable::where()
 
 bool ZeptoTable::next()
 {
-	uint32_t recordCount = this->getTableRecordCount();
+	int32_t recordCount = this->getTableRecordCount();
 	bool matched = false;
 
 	while(!matched && this->currQueryId < recordCount) {
@@ -544,14 +542,14 @@ int32_t ZeptoTable::getInt32(int16_t pos)
 
 int64_t ZeptoTable::getInt64(int16_t pos)
 {
-	int64_t ret = this->currRec[pos] << 56;
-	ret |= this->currRec[pos + 1] << 48;
-	ret |= this->currRec[pos + 2] << 40;
-	ret |= this->currRec[pos + 3] << 32;
-	ret |= this->currRec[pos + 4] << 24;
-	ret |= this->currRec[pos + 5] << 16;
-	ret |= this->currRec[pos + 6] << 8;
-	ret |= this->currRec[pos + 7];
+	int64_t ret = ((uint64_t) this->currRec[pos]) << 56;
+	ret |= ((uint64_t) this->currRec[pos + 1] << 48);
+	ret |= ((uint64_t) this->currRec[pos + 2] << 40);
+	ret |= ((uint64_t) this->currRec[pos + 3] << 32);
+	ret |= ((uint64_t) this->currRec[pos + 4] << 24);
+	ret |= ((uint64_t) this->currRec[pos + 5] << 16);
+	ret |= ((uint64_t) this->currRec[pos + 6] << 8);
+	ret |= ((uint64_t) this->currRec[pos + 7]);
 
 	return ret;
 }
@@ -610,7 +608,7 @@ uint64_t ZeptoTable::getFileSize()
 }
 
 
-uint32_t ZeptoTable::getTableRecordCount()
+int32_t ZeptoTable::getTableRecordCount()
 {
 	uint32_t ret = (this->getFileSize() - ZHEADER_SIZE) / this->recordLen;
 
