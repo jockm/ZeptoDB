@@ -5,7 +5,7 @@
  *      Author: jock
  */
 
-#include <ZeptoDB/ZeptoTable.h>
+#include "ZeptoTable.h"
 #include <string.h>
 
 enum {
